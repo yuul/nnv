@@ -1154,7 +1154,18 @@ classdef ImageStar < handle
             
         end
                
-              
+        % function to compute approximately the number of images covered
+        % this function employs polytope volume computation
+        % finds the volume defined by C*alpha <= d
+        function statesCovered = getStarCoverage(obj)
+            
+            if isempty(obj.C) || isempty(obj.d)
+                statesCovered = 0;
+            else
+                P1 = Polyhedron(obj.C, obj.d);
+                statesCovered = volume(P1);
+            end
+        end
          
     end
     

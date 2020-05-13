@@ -1196,7 +1196,32 @@ classdef Star
                         
         end
         
-        
+        % function to compute number of examples
+        % this function employs polytope volume computation
+        % finds the volume defined by C*alpha <= d
+        function statesCovered = getStarCoverage(obj)
+            
+            %isempty(obj.d)
+            if isempty(obj.C) || isempty(obj.d)
+                statesCovered = 0;
+            else
+                
+                P1 = Polyhedron(obj.C, obj.d);
+                try
+                    statesCovered = volume(P1);
+                catch err
+                    %disp(err);
+                    statesCovered = 0;
+                end
+                
+                
+                if isinf(statesCovered)
+                    %disp(statesCovered);
+                    statesCovered = 0;
+                end
+                
+            end
+        end
     end
     
     methods(Static) % plot methods
