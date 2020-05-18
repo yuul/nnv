@@ -21,8 +21,11 @@ F = FFNN(Layers);
 % 1145 <= i4 (\v_own) <= 1200, 
 % 0 <= i5 (\v_in) <= 60
 
-lb = [55947.69; -3.14; -3.14; 1145; 0];
-ub = [60760; 3.14; 3.14; 1200; 60];
+%lb = [55947.69; -3.14; -3.14; 1145; 0];
+%ub = [60760; 3.14; 3.14; 1200; 60];
+
+lb = [57300; -.5; -.5; 1170; 25];
+ub = [57700; .5; .5; 1175; 35];
 
 % normalize input
 for i=1:5
@@ -30,10 +33,12 @@ for i=1:5
     ub(i) = (ub(i) - means_for_scaling(i))/range_for_scaling(i);   
 end
 
-V = Reduction.getVertices(lb, ub);
+%V = Reduction.getVertices(lb, ub);
 
-I = Polyhedron('V', V');
+%I = Polyhedron('V', V');
+B = Box(lb, ub);
 
+I = B.toStar;
 [R, t] = F.reach(I, 'exact', 4, []); % exact reach set
 save F.mat F; % save the verified network
 F.print('F.info'); % print all information to a file

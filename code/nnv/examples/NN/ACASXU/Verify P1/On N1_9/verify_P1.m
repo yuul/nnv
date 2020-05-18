@@ -21,8 +21,8 @@ F = FFNN(Layers);
 % 1145 <= i4 (\v_own) <= 1200, 
 % 0 <= i5 (\v_in) <= 60
 
-lb = [55947.69; -3.14; -3.14; 1145; 0];
-ub = [60760; 3.14; 3.14; 1200; 60];
+lb = [58000; -.5; -.5; 1170; 25];
+ub = [58050; .5; .5; 1175; 35];
 
 % normalize input
 for i=1:5
@@ -30,9 +30,9 @@ for i=1:5
     ub(i) = (ub(i) - means_for_scaling(i))/range_for_scaling(i);   
 end
 
-V = Reduction.getVertices(lb, ub);
+B = Box(lb, ub);
 
-I = Polyhedron('V', V');
+I = B.toStar;
 
-[R, t] = F.reach(I, 'exact', 4, []); % exact reach set
+[R, t] = F.reach(I, 'exact', 1, []); % exact reach set
 save result.mat;
