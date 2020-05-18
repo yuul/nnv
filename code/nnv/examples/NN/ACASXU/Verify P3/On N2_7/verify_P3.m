@@ -23,15 +23,17 @@ F = FFNN(Layers);
 
 lb = [1500; -0.06; 3.1; 980; 960];
 ub = [1800; 0.06; 3.14; 1200; 1200];
-
+%lb = [1650; -.02; 3.1; 1040; 1030];
+%ub = [1750; .02; 3.14; 1140; 1130];
 % normalize input
 for i=1:5
     lb(i) = (lb(i) - means_for_scaling(i))/range_for_scaling(i);
     ub(i) = (ub(i) - means_for_scaling(i))/range_for_scaling(i);   
 end
 
-I = Polyhedron('lb', lb, 'ub', ub);
-
+%I = Polyhedron('lb', lb, 'ub', ub);
+B = Box(lb, ub);
+I = B.toStar;
 [R, t] = F.reach(I, 'exact', 4, []); % exact reach set
 save result.mat; % save the verified network
 F.print('F.info'); % print all information to a file

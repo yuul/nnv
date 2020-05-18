@@ -101,7 +101,8 @@ set(gca, 'FontSize', 10);
 %%% Generate reachable sets from ACASXU/Verify P1/On N1_1/verify_P1_star
 %%% Results stored in the F.mat file in that directory
 %%% Compute exact neuron coverage on those reachable sets
-%load('ACASXU/Verify P1/On N1_1/f.mat', 'F');
+%load('../ACASXU/Verify P1/On N1_1/f.mat', 'F');
+%net1 = F;
 %vol = computeLayerVolumes(F);
 %volCov = computeNeuronCoverage(F, 0);
 %%% stored currently in coverage.mat
@@ -129,9 +130,25 @@ end
 
 %%% Experiment 4: ACAS Xu network again
 %%% Generate reachable set from another network?
+%load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
+%net2 = F;
+%vol = computeLayerVolumes(net2);
+%volCov = computeNeuronCoverage(net2, 0);
 
+%ub = [0.999135576907121;0.079577471545942;0.079577471545942;0.477272727272727;-0.470833333333333];
+%lb = [0.916163173528484;-0.079577471545942;-0.079577471545942;0.472727272727273;-0.479166666666667];
+%{
+[examples, input] = generateGrid(ub,lb,10);
+cov = cell(1,size(examples,2));
+for i = 1:size(examples,2)
+    cov{1,i} = singleInputCoverage(F, examples(:,i), 0);
+end
+%}
+%singleInput = combineSingInputs(cov);
 
-
-
-
-
+%%% Experiment 5: Batch run, make sure to do it on a large number
+load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
+load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
+load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
+load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
+load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');

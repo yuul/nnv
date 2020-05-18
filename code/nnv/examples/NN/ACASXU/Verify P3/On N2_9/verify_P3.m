@@ -30,7 +30,9 @@ for i=1:5
     ub(i) = (ub(i) - means_for_scaling(i))/range_for_scaling(i);   
 end
 
-I = Polyhedron('lb', lb, 'ub', ub);
+%I = Polyhedron('lb', lb, 'ub', ub);
+B = Box(lb, ub);
+I = B.toStar;
 
 [R, t] = F.reach(I, 'exact', 4, []); % exact reach set
 save result.mat; % save the verified network
