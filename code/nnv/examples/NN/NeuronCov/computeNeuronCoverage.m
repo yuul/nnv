@@ -47,9 +47,9 @@ function coverage = computeNeuronCoverage(net, activation)
 
             layerResults(j,1) = (volume - newVol)/volume;
             layerResults(j,2) = t1;
-            fprintf('Percent coverage: %.5f for Layer %d, Neuron %d Time:%.5f Empty Sets: %d\n', layerResults(j,1), i,j, layerResults(j,2), emptySet);
+            %fprintf('Percent coverage: %.5f for Layer %d, Neuron %d Time:%.5f Empty Sets: %d\n', layerResults(j,1), i,j, layerResults(j,2), emptySet);
         end
-        
+        fprintf('Done with layer: %d\n', i);
         coverage{1,i} = layerResults;
     end
 end

@@ -8,9 +8,6 @@ function output = makeTable(coverage)
         theMax = max(theMax, size(coverage{1,i},1));
     end
     
-    disp(names);
-    disp(size(coverage));
-    disp(size(names));
     T = table();
     
     for i = 1:size(coverage,2)

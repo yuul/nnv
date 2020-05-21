@@ -146,9 +146,121 @@ end
 %}
 %singleInput = combineSingInputs(cov);
 
-%%% Experiment 5: Batch run, make sure to do it on a large number
-load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
-load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
-load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
-load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
-load('../ACASXU/Verify P1/On N1_2/f.mat', 'F');
+%%% Experiment 5: Batch run, make sure to do it on a large number of nets
+%{
+nets = cell(1,7);
+load('../ACASXU/Verify P1/On N1_9/result.mat', 'F');
+nets{1,1} = F;
+load('../ACASXU/Verify P2/On N2_1/f.mat', 'F');
+nets{1,2} = F;
+load('../ACASXU/Verify P2/On N2_2/result.mat', 'F');
+nets{1,3} = F;
+load('../ACASXU/Verify P2/On N2_3/result.mat', 'F');
+nets{1,4} = F;
+load('../ACASXU/Verify P2/On N2_4/result.mat', 'F');
+nets{1,5} = F;
+load('../ACASXU/Verify P3/On N2_7/result.mat', 'F');
+nets{1,6} = F;
+load('../ACASXU/Verify P3/On N2_9/result.mat', 'F');
+nets{1,7} = F;
+
+UBsets = cell(1,7);
+load('../ACASXU/Verify P1/On N1_9/result.mat', 'ub');
+UBsets{1,1} = ub;
+%load('../ACASXU/Verify P2/On N2_1/result.mat', 'ub');
+ub = [0.6291; 0.0796; 0.0796; 0.4773; -0.4708];
+UBsets{1,2} = ub;
+load('../ACASXU/Verify P2/On N2_2/result.mat', 'ub');
+UBsets{1,3} = ub;
+load('../ACASXU/Verify P2/On N2_3/result.mat', 'ub');
+UBsets{1,4} = ub;
+load('../ACASXU/Verify P2/On N2_4/result.mat', 'ub');
+UBsets{1,5} = ub;
+load('../ACASXU/Verify P3/On N2_7/result.mat', 'ub');
+UBsets{1,6} = ub;
+load('../ACASXU/Verify P3/On N2_9/result.mat', 'ub');
+UBsets{1,7} = ub;
+
+lbsets = cell(1,7);
+load('../ACASXU/Verify P1/On N1_9/result.mat', 'lb');
+lbsets{1,1} = lb;
+%load('../ACASXU/Verify P2/On N2_1/result.mat', 'lb');
+lb = [0.6224; -0.07961; -0.0796; 0.4727; -0.4792];
+lbsets{1,2} = lb;
+load('../ACASXU/Verify P2/On N2_2/result.mat', 'lb');
+lbsets{1,3} = lb;
+load('../ACASXU/Verify P2/On N2_3/result.mat', 'lb');
+lbsets{1,4} = lb;
+load('../ACASXU/Verify P2/On N2_4/result.mat', 'lb');
+lbsets{1,5} = lb;
+load('../ACASXU/Verify P3/On N2_7/result.mat', 'lb');
+lbsets{1,6} = lb;
+load('../ACASXU/Verify P3/On N2_9/result.mat', 'lb');
+lbsets{1,7} = lb;
+%}
+
+%%% once the info is saved, can be easily loaded from BatchInput.mat
+%load BatchInput.mat
+
+%{
+for i = 1:1
+    try
+        st = tic;
+        filename = strcat('BatchOutput', num2str(i));
+        volCov = computeNeuronCoverage(nets{1,i},0);
+        save(filename, 'volCov');
+        [examples, input] = generateGrid(ubsets{1,i},lbsets{1,i},10);
+        cov = cell(1,size(examples,2));
+        for j = 1:size(examples,2)
+            cov{1,j} = singleInputCoverage(nets{1,i}, examples(:,j), 0);
+        end
+        singleInput = combineSingInputs(cov);
+        
+        filename = strcat('BatchOutput', num2str(i));
+        fin = toc(st);
+        save(filename, 'singleInput', 'fin', '-append');
+        fprintf('Done with set %d Time: %.4f\n', i, fin);
+    catch err
+        disp(err);
+    end
+end
+%}
+
+tables = cell(7,2);
+for i = 1:1
+    filename = strcat('batchOutputs/BatchOutput', num2str(i));
+    load(filename);
+    
+    % round the values!
+    for j = 1:size(volCov,2)
+        %A(A>10) = 10
+        volCov{1,i}(abs(volCov{1,i})<.001) = 0;
+        %volCov{1,i} = round(volCov{1,i},2);
+    end
+    disp(class(volCov{1,5}));
+    tables{i,1} = makeTable(volCov);
+    tables{i,2} = makeTable(singleInput);
+    
+    output1 = strcat('batchOutputs/VolOutput', num2str(i), '.csv');
+    output2 = strcat('batchOutputs/TestOutput', num2str(i), '.csv');
+    writetable(tables{i,1},output1); 
+    writetable(tables{i,2},output2); 
+end
+
+
+% Full Batch Run
+load ACASXU_run2a_1_1_batch_2000.mat;
+Layers = [];
+n = length(b);
+for i=1:n - 1
+    bi = cell2mat(b(i));
+    Wi = cell2mat(W(i));
+    Li = Layer(Wi, bi, 'ReLU');
+    Layers = [Layers Li];
+end
+bn = cell2mat(b(n));
+Wn = cell2mat(W(n));
+Ln = Layer(Wn, bn, 'Linear');
+
+Layers = [Layers Ln];
+F = FFNN(Layers);
