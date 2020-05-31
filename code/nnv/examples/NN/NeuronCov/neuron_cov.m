@@ -134,11 +134,11 @@ end
 %net2 = F;
 %vol = computeLayerVolumes(net2);
 %volCov = computeNeuronCoverage(net2, 0);
-
-%ub = [0.999135576907121;0.079577471545942;0.079577471545942;0.477272727272727;-0.470833333333333];
-%lb = [0.916163173528484;-0.079577471545942;-0.079577471545942;0.472727272727273;-0.479166666666667];
 %{
-[examples, input] = generateGrid(ub,lb,10);
+ub = [0.999135576907121;0.079577471545942;0.079577471545942;0.477272727272727;-0.470833333333333];
+lb = [0.916163173528484;-0.079577471545942;-0.079577471545942;0.472727272727273;-0.479166666666667];
+
+[examples] = generateGrid(ub,lb,10);
 cov = cell(1,size(examples,2));
 for i = 1:size(examples,2)
     cov{1,i} = singleInputCoverage(F, examples(:,i), 0);
@@ -226,6 +226,7 @@ for i = 1:1
 end
 %}
 
+%{
 tables = cell(7,2);
 for i = 1:1
     filename = strcat('batchOutputs/BatchOutput', num2str(i));
@@ -246,21 +247,72 @@ for i = 1:1
     writetable(tables{i,1},output1); 
     writetable(tables{i,2},output2); 
 end
-
+%}
 
 % Full Batch Run
-load ACASXU_run2a_1_1_batch_2000.mat;
-Layers = [];
-n = length(b);
-for i=1:n - 1
-    bi = cell2mat(b(i));
-    Wi = cell2mat(W(i));
-    Li = Layer(Wi, bi, 'ReLU');
-    Layers = [Layers Li];
+% load all of the networks
+networks = cell(1,45);
+for i = 1:5
+    for j = 1:9
+        filename = strcat('../ACASXU/nnet-mat-files/ACASXU_run2a_', num2str(i),'_', num2str(j), '_batch_2000.mat');
+        networks{1,9*(i-1)+j} = createACASnet(filename);
+    end
 end
-bn = cell2mat(b(n));
-Wn = cell2mat(W(n));
-Ln = Layer(Wn, bn, 'Linear');
 
-Layers = [Layers Ln];
-F = FFNN(Layers);
+% generate random seed and grid
+rng(1,'twister');
+lb = [0;-pi; -pi; 100; 0];
+ub = [62000; pi; pi; 1200; 1200];
+means = [0;0;0;650;600];
+range = [60261;6.283185307180000;6.283185307180000;1100;1200];
+ub = (ub-means)./range;
+lb = (lb-means)./range;
+examples = generateUniformRand(ub, lb, 1000);
+
+% run on all of the networks 
+% should I be using different inputs at each iteration?
+%{
+singleInput = cell(1,45);
+for i = 1:size(networks,2)
+    
+    % generate the examples for the input nets
+    cov = cell(1,size(examples,2));
+    for j = 1:size(examples,2)
+        cov{1,j} = singleInputCoverage(networks{1,i}, examples(:,j), 0);
+    end
+    singleInput{1,i} = combineSingInputs(cov);
+end
+%}
+
+% create smaller ub and lb ranges for the volume computation 1/10 the
+% original size
+delta = (ub-lb)/100;
+newUb = ub - 48.5*delta;
+newLb = lb + 48.5*delta;
+
+B = Box(newLb, newUb);
+I = B.toStar;
+%save('Batch.mat', 'networks');
+
+%size(networks,2)
+for i = 1:size(networks,2)
+    
+    % reachability analysis
+    [R, t] = networks{1,i}.reach(I, 'exact', 4, []);
+    filename = strcat('batchRun/Batch', num2str(i), '.mat');
+    output = networks{1,i};
+    save(filename, 'output');
+    
+    % volume analysis
+    volCov = computeNeuronCoverage(networks{1,i},0);
+    save(filename, 'volCov', '-append');
+    
+    % testing example on the smaller set
+    examples = generateUniformRand(newUb, newLb, 1000);
+    cov = cell(1,size(examples,2));
+    for j = 1:size(examples,2)
+        cov{1,j} = singleInputCoverage(networks{1,i}, examples(:,j), 0);
+    end
+    singleInput = combineSingInputs(cov);
+    save(filename, 'singleInput', '-append');
+end

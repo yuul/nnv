@@ -13,6 +13,7 @@ function coverage = computeNeuronCoverage(net, activation)
         %set_length = net.numReachSet(i);
         %cur_layer = Layers(1,i);
         
+        lay = tic;
         % Step 2: Calculate the volume of the sets covered by a given layer
         volume = 0.0;
         numReachSet = size(net.reachSet{1,i}, 2);      
@@ -49,7 +50,9 @@ function coverage = computeNeuronCoverage(net, activation)
             layerResults(j,2) = t1;
             %fprintf('Percent coverage: %.5f for Layer %d, Neuron %d Time:%.5f Empty Sets: %d\n', layerResults(j,1), i,j, layerResults(j,2), emptySet);
         end
-        fprintf('Done with layer: %d\n', i);
+        
+        t2 = toc(lay);
+        fprintf('Done with layer: %d Time: %.4f\n', i, t2);
         coverage{1,i} = layerResults;
     end
 end
