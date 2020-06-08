@@ -144,7 +144,6 @@ for i = 1:size(networks,2)
     save(filename, 'singleInput', '-append');
 end
 
-
 results = zeros(45,2,4,7);
 for i = 1:45
     
@@ -154,21 +153,13 @@ for i = 1:45
     results(i,2,:,:) = aggregateCoverage(singleInput);
 end
 save('batchRun/results.mat', 'results');
-
+%}
 load('batchRun/results.mat','results');
 aggVol = results(:,1,4,:);
 aggVol = reshape(aggVol,45,7);
-volTable = array2table(aggVol);
-volTable.Properties.VariableNames = {'Layer1','Layer2','Layer3','Layer4','Layer5','Layer6','Layer7'};
-writetable(volTable,'batchRun/volTable.csv');
+
 aggTest = results(:,2,4,:);
 aggTest = reshape(aggTest,45,7);
-testTable = array2table(aggTest);
-testTable.Properties.VariableNames = {'Layer1','Layer2','Layer3','Layer4','Layer5','Layer6','Layer7'};
-writetable(testTable,'batchRun/testTable.csv');
-%}
-
-
 
 %%% Run on one ACAS Xu example with the whole input space
 %%% Partition the input space into halves, so you have a combination of
