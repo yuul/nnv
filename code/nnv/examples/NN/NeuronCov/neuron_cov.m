@@ -172,7 +172,6 @@ writetable(testTable,'batchRun/testTable.csv');
 %%% Run on one ACAS Xu example with the whole input space
 %%% Partition the input space into halves, so you have a combination of
 %%% every half - 5 Dimensions means 2^5 = 32 total spaces
-%{
 lb = [0;-pi; -pi; 100; 0];
 ub = [60261; pi; pi; 1200; 1200];
 means = [0;0;0;650;600];
@@ -219,46 +218,3 @@ for i = 1:1
     fin = toc(start);
     fprintf("Reachability done, time:%.4f/n", fin);
 end
-%{
-ACASfile = '../ACASXU/nnet-mat-files/ACASXU_run2a_1_1_batch_2000.mat';
-network = createACASnet(ACASfile);
-for i = 1:1
-    
-    % convert to binary representation
-    b = dec2bin(i-1,5);
-
-    % now use this binary representation to determine which half of the
-    % input space to use for each dimension 
-    % for example, 10000 means use the upper half for dim 1 and use the
-    % lower half for the rest of the dimensions
-    curLb = zeros(5,1);
-    curUb = zeros(5,1);
-    for j = 1:size(b,2)
-        
-        if(b(1,j) == 0)
-            curLb(j,1) = lb(j,1);
-            curUb(j,1) = middle(j,1);
-        else
-            curLb(j,1) = middle(j,1);
-            curUb(j,1) = ub(j,1);
-        end
-    end
-    
-    % run reachability analysis
-<<<<<<< HEAD
-    %{
-=======
->>>>>>> e8f30988fe662dd13c454d6177e400179d34d322
-    B = Box(curLb, curUb);
-    I = B.toStar;
-    st = tic;
-    network.reach(I, 'exact', 4, []);
-    fin = toc(st);
-    filename = strcat('partitionRun/Partition', num2str(i), '.mat');
-    save(filename, 'B', 'fin', 'network');
-<<<<<<< HEAD
-    %}
-=======
->>>>>>> e8f30988fe662dd13c454d6177e400179d34d322
-end
-%}
