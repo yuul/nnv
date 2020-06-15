@@ -143,7 +143,10 @@ for i = 1:size(networks,2)
     singleInput = combineSingInputs(cov);
     save(filename, 'singleInput', '-append');
 end
+%}
 
+%{
+%%% Aggregate the results into one matrix
 results = zeros(45,2,4,7);
 for i = 1:45
     
@@ -154,13 +157,34 @@ for i = 1:45
 end
 save('batchRun/results.mat', 'results');
 %}
+
+%{
+%%% Create tables from the information on the results and save them
 load('batchRun/results.mat','results');
 aggVol = results(:,1,4,:);
 aggVol = reshape(aggVol,45,7);
-
+volTable = array2table(aggVol);
+volTable.Properties.VariableNames = {'Layer1','Layer2','Layer3','Layer4','Layer5','Layer6','Layer7'};
+writetable(volTable,'batchRun/volTable.csv');
 aggTest = results(:,2,4,:);
 aggTest = reshape(aggTest,45,7);
+testTable = array2table(aggTest);
+testTable.Properties.VariableNames = {'Layer1','Layer2','Layer3','Layer4','Layer5','Layer6','Layer7'};
+writetable(testTable,'batchRun/testTable.csv');
+%}
 
+%%% Try out a denser aggregationg/table - just one number for each network
+results = zeros(45,2,4,7);
+for i = 1:45
+    
+    filename = strcat('batchRun/Batch',num2str(i),'.mat');
+    load(filename, 'volCov', 'singleInput');
+    results(i,1,:,:) = aggregateCovFull(volCov);
+    results(i,2,:,:) = aggregateCovFull(singleInput);
+end
+
+
+%%% EXPERIMENT 7?
 %%% Run on one ACAS Xu example with the whole input space
 %%% Partition the input space into halves, so you have a combination of
 %%% every half - 5 Dimensions means 2^5 = 32 total spaces
@@ -171,39 +195,44 @@ means = [0;0;0;650;600];
 range = [60261;6.283185307180000;6.283185307180000;1100;1200];
 ub = (ub-means)./range;
 lb = (lb-means)./range;
-middle = (ub-lb)./2 + lb;
+
+% partitions is the number of partitions to split into?
+partitions = 10;
+space = cell(1,size(lb,1));
+for i = 1:size(lb,1)
+    fullSpace = linspace(lb(i,1),ub(i,1),partitions+1);
+    space{1,i} = fullSpace(:,1:size(fullSpace,2)-1);
+end
+start = tic;
+inputs = allcomb(space{1,1},space{1,2},space{1,3},space{1,4},space{1,5});
+fin = toc(start);
+fprintf("All Combos Computed, time:%.4f, size:%d\n", fin, size(inputs,1));
+
+spacing = (ub-lb)./(partitions);
+spacing = reshape(spacing, 1,5);
 
 ACASfile = '../ACASXU/nnet-mat-files/ACASXU_run2a_1_1_batch_2000.mat';
 network = createACASnet(ACASfile);
+
+%size(inputs,1)
 for i = 1:1
     
-    % convert to binary representation
-    b = dec2bin(i-1,5);
+    start = tic;
+    newLB = inputs(i,:);
+    newUB = newLB + spacing;
 
-    % now use this binary representation to determine which half of the
-    % input space to use for each dimension 
-    % for example, 10000 means use the upper half for dim 1 and use the
-    % lower half for the rest of the dimensions
-    curLb = zeros(5,1);
-    curUb = zeros(5,1);
-    for j = 1:size(b,2)
-        
-        if(b(1,j) == 0)
-            curLb(j,1) = lb(j,1);
-            curUb(j,1) = middle(j,1);
-        else
-            curLb(j,1) = middle(j,1);
-            curUb(j,1) = ub(j,1);
-        end
-    end
-    
-    % run reachability analysis
-    B = Box(curLb, curUb);
+    newLB = newLB.';
+    newUB = newUB.';
+    B = Box(newLB, newUB);
     I = B.toStar;
-    st = tic;
     network.reach(I, 'exact', 4, []);
-    fin = toc(st);
-    filename = strcat('partitionRun/Partition', num2str(i), '.mat');
-    save(filename, 'B', 'fin', 'network');
+    
+    fin = toc(start);
+    fprintf("Reachability done, time:%.4f/n", fin);
+    
+    start = tic;
+    volCov = computeNeuronCoverage(network,0);
+    fin = toc(start);
+    fprintf("Reachability done, time:%.4f/n", fin);
 end
 %}

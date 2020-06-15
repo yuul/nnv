@@ -143,8 +143,10 @@ for i = 1:size(networks,2)
     singleInput = combineSingInputs(cov);
     save(filename, 'singleInput', '-append');
 end
+%}
 
-
+%{
+%%% Aggregate the results into one matrix
 results = zeros(45,2,4,7);
 for i = 1:45
     
@@ -154,7 +156,10 @@ for i = 1:45
     results(i,2,:,:) = aggregateCoverage(singleInput);
 end
 save('batchRun/results.mat', 'results');
+%}
 
+%{
+%%% Create tables from the information on the results and save them
 load('batchRun/results.mat','results');
 aggVol = results(:,1,4,:);
 aggVol = reshape(aggVol,45,7);
@@ -168,10 +173,27 @@ testTable.Properties.VariableNames = {'Layer1','Layer2','Layer3','Layer4','Layer
 writetable(testTable,'batchRun/testTable.csv');
 %}
 
+%%% Try out a denser aggregationg/table - just one number for each network
+fullAgg = zeros(45,2);
+for i = 1:45
+    
+    filename = strcat('batchRun/Batch',num2str(i),'.mat');
+    load(filename, 'volCov', 'singleInput');
+    fullAgg(i,1) = aggregateCovFull(volCov);
+    fullAgg(i,2) = aggregateCovFull(singleInput);
+end
 
+fullTable = array2table(fullAgg);
+fullTable.Properties.VariableNames = {'Volume Coverage', 'Test Coverage'};
+%writetable(fullTable, 'batchRun/fullTable.csv');
+save('batchRun/results.mat', 'fullAgg', '-append');
+
+
+%%% EXPERIMENT 7?
 %%% Run on one ACAS Xu example with the whole input space
 %%% Partition the input space into halves, so you have a combination of
 %%% every half - 5 Dimensions means 2^5 = 32 total spaces
+%{
 lb = [0;-pi; -pi; 100; 0];
 ub = [60261; pi; pi; 1200; 1200];
 means = [0;0;0;650;600];
@@ -218,3 +240,4 @@ for i = 1:1
     fin = toc(start);
     fprintf("Reachability done, time:%.4f/n", fin);
 end
+%}
