@@ -169,19 +169,56 @@ writetable(testTable,'batchRun/testTable.csv');
 %}
 
 
-
 %%% Run on one ACAS Xu example with the whole input space
 %%% Partition the input space into halves, so you have a combination of
 %%% every half - 5 Dimensions means 2^5 = 32 total spaces
-%{
 lb = [0;-pi; -pi; 100; 0];
 ub = [60261; pi; pi; 1200; 1200];
 means = [0;0;0;650;600];
 range = [60261;6.283185307180000;6.283185307180000;1100;1200];
 ub = (ub-means)./range;
 lb = (lb-means)./range;
-middle = (ub-lb)./2 + lb;
 
+% paritions is the number of partitions to split into?
+partitions = 10;
+space = cell(1,size(lb,1));
+for i = 1:size(lb,1)
+    fullSpace = linspace(lb(i,1),ub(i,1),partitions+1);
+    space{1,i} = fullSpace(:,1:size(fullSpace,2)-1);
+end
+start = tic;
+inputs = allcomb(space{1,1},space{1,2},space{1,3},space{1,4},space{1,5});
+fin = toc(start);
+fprintf("All Combos Computed, time:%.4f, size:%d\n", fin, size(inputs,1));
+
+spacing = (ub-lb)./(partitions);
+spacing = reshape(spacing, 1,5);
+
+ACASfile = '../ACASXU/nnet-mat-files/ACASXU_run2a_1_1_batch_2000.mat';
+network = createACASnet(ACASfile);
+
+%size(inputs,1)
+for i = 1:1
+    
+    start = tic;
+    newLB = inputs(i,:);
+    newUB = newLB + spacing;
+
+    newLB = newLB.';
+    newUB = newUB.';
+    B = Box(newLB, newUB);
+    I = B.toStar;
+    network.reach(I, 'exact', 4, []);
+    
+    fin = toc(start);
+    fprintf("Reachability done, time:%.4f/n", fin);
+    
+    start = tic;
+    volCov = computeNeuronCoverage(network,0);
+    fin = toc(start);
+    fprintf("Reachability done, time:%.4f/n", fin);
+end
+%{
 ACASfile = '../ACASXU/nnet-mat-files/ACASXU_run2a_1_1_batch_2000.mat';
 network = createACASnet(ACASfile);
 for i = 1:1
@@ -207,6 +244,7 @@ for i = 1:1
     end
     
     % run reachability analysis
+    %{
     B = Box(curLb, curUb);
     I = B.toStar;
     st = tic;
@@ -214,5 +252,6 @@ for i = 1:1
     fin = toc(st);
     filename = strcat('partitionRun/Partition', num2str(i), '.mat');
     save(filename, 'B', 'fin', 'network');
+    %}
 end
 %}
