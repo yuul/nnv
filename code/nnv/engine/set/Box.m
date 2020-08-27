@@ -129,6 +129,10 @@ classdef Box
 
         end
         
+        function size = computeBoxSize(obj)
+            disp("HELP");
+            size = product(obj.ub-obj.lb);
+        end
         
         % affine mapping of a box
         
@@ -224,6 +228,7 @@ classdef Box
         end
         
         % partition a box into smaller boxes
+        
         
     end
     

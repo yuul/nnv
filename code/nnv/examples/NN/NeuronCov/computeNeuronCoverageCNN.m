@@ -15,18 +15,18 @@ function coverage = computeNeuronCoverageCNN(net, activation)
         %cur_layer = Layers(1,i);
         
         % Step 2: Calculate the volume of the sets covered by a given layer
-        %volume = net.reachSet{i+1}.getStarCoverage();
-        %{
+        volume = net.reachSet{i+1}.getStarCoverage();
+        
         for j = 1:net.reachSet{1}
             %disp(net.reachSet{i}(1,j))
             volume = volume + net.reachSet{i}(1,j).getStarCoverage();
         end
-        %}
+        
         %disp(volume);
         layerResults = zeros(net.Layers(1,i).N,1);
         
         % Step 2: Iterate over every neuron in the layer
-        %{
+        
         for j = 1:net.Layers(1,i).N
             
             % Step 3: Create a half space with that neuron 
@@ -44,7 +44,7 @@ function coverage = computeNeuronCoverageCNN(net, activation)
             fprintf('Percent coverage: %.5f for Layer %d, Neuron %d \n', newVol/volume, i,j);
             layerResults(j,1) = newVol/volume;
         end
-        %}
+        
         coverage{1,i} = layerResults;
     end
 end

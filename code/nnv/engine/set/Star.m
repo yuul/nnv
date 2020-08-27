@@ -24,6 +24,7 @@ classdef Star
     
     methods
         
+        
         % constructor
         function obj = Star(varargin)
             % @V: bassic matrix
@@ -282,6 +283,10 @@ classdef Star
                 end
             end
             
+        end
+        
+        function test = tester(obj)
+            test = "hello there";
         end
         
         % check if a star set is a subset of other

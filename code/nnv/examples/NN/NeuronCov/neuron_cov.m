@@ -1,28 +1,3 @@
-%%% EXPERIMENT 1: Manual Examples
-%%% Take a manually constructed net and perform exact Neuron Cov estimation
-%%% on it
-%%% Also examine the coverage vs individual examples
-%{
-% ub is upper bound, lb is lower bound, F is network with Reachability
-% computed, I is the input set, and newExamples is the grid of single
-% inputs
-load('ManualInputs.mat');
-
-% run volume based Neuron Coverage computation
-result = computeNeuronCoverage(F, 0);
-
-% iterate over all the new examples and examine their single input coverage
-cov = cell(1,size(newExamples,2));
-st = tic;
-for i = 1:size(newExamples, 2)
-    cov{1,i} = singleInputCoverage(F, newExamples(:,i), 0);
-end
-fin = toc(st);
-singleInput = combineSingInputs(cov);
-fprintf('Ran Single Input Coverage on %d inputs in %.4f time\n', size(newExamples,2), fin);
-%save('ManualOutputs.mat', 'result', 'cov','fin');
-%}
-
 %%% EXPERIMENT 3: Neuron Coverage on ACAS XU network
 %%% Generate reachable sets from ACASXU/Verify P1/On N1_1/verify_P1_star
 %%% Results stored in the F.mat file in that directory
@@ -94,6 +69,7 @@ range = [60261;6.283185307180000;6.283185307180000;1100;1200];
 ub = (ub-means)./range;
 lb = (lb-means)./range;
 examples = generateUniformRand(ub, lb, 1000);
+%}
 
 % run on all of the networks 
 % should I be using different inputs at each iteration?
@@ -106,13 +82,21 @@ for i = 1:size(networks,2)
     for j = 1:size(examples,2)
         cov{1,j} = singleInputCoverage(networks{1,i}, examples(:,j), 0);
     end
-    singleInput{1,i} = combineSingInputs(cov);
+    singleInput{1,i} = countSingInputs(cov);
 end
+
+aggOverallCov = zeros(1,size(singleInput,2));
+for i = 1:size(singleInput, 2)
+    aggOverallCov(1,i) = aggregateCovFull(singleInput{1,i});
+end
+save('batchRun/overall.mat', 'aggOverallCov', 'singleInput');
 %}
+
 
 % create smaller ub and lb ranges for the volume computation (1/25)^5 the
 % original size - I did this for examples 1-10
 % for examples 11-45, I used an input size (3/100)^5 the original size
+%{
 delta = (ub-lb)/100;
 newUb = ub - 48.5*delta;
 newLb = lb + 48.5*delta;
@@ -122,8 +106,10 @@ I = B.toStar;
 %save('Batch.mat', 'networks');
 
 %size(networks,2)
+singleCovTimes = zeros(45,1);
 for i = 1:size(networks,2)
     
+    %{
     % reachability analysis
     [R, t] = networks{1,i}.reach(I, 'exact', 4, []);
     filename = strcat('batchRun/Batch', num2str(i), '.mat');
@@ -133,15 +119,18 @@ for i = 1:size(networks,2)
     % volume analysis
     volCov = computeNeuronCoverage(networks{1,i},0);
     save(filename, 'volCov', '-append');
+    %}
     
     % testing example on the smaller set
+    st = tic;
     examples = generateUniformRand(newUb, newLb, 1000);
     cov = cell(1,size(examples,2));
     for j = 1:size(examples,2)
         cov{1,j} = singleInputCoverage(networks{1,i}, examples(:,j), 0);
     end
     singleInput = combineSingInputs(cov);
-    save(filename, 'singleInput', '-append');
+    singleCovTimes(i,1) = toc(st);
+    %save(filename, 'singleInput', '-append');
 end
 %}
 
@@ -173,6 +162,7 @@ testTable.Properties.VariableNames = {'Layer1','Layer2','Layer3','Layer4','Layer
 writetable(testTable,'batchRun/testTable.csv');
 %}
 
+%{
 %%% Try out a denser aggregationg/table - just one number for each network
 fullAgg = zeros(45,2);
 for i = 1:45
@@ -187,7 +177,29 @@ fullTable = array2table(fullAgg);
 fullTable.Properties.VariableNames = {'Volume Coverage', 'Test Coverage'};
 %writetable(fullTable, 'batchRun/fullTable.csv');
 save('batchRun/results.mat', 'fullAgg', '-append');
-
+%}
+%{
+count = zeros(1,45);
+times = zeros(1,45);
+for i = 1:45
+    
+    filename = strcat('batchRun/Batch',num2str(i),'.mat');
+    load(filename, 'volCov');
+    %count(1,i) = countPartialCov(volCov);
+    times(1,i) = sumTimes(volCov);
+end
+%}
+setSize = zeros(1,7);
+for i = 1:45
+    
+    filename = strcat('batchRun/Batch',num2str(i),'.mat');
+    load(filename, 'output');
+    
+    for j = 1:7
+        setSize(1,j) = setSize(1,j) + size(output.reachSet{1,j},2);
+    end
+end
+setSize = setSize ./ 45;
 
 %%% EXPERIMENT 7?
 %%% Run on one ACAS Xu example with the whole input space

@@ -1,5 +1,7 @@
 function results = combineSingInputs(coverage)
+    %%% This function takes the average amount of coverage for the networks
     
+
     results = cell(size(coverage{1,1}));
 
     % generate the correct cells

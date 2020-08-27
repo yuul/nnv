@@ -8,6 +8,7 @@ if opt_retrain
     TrainABasicConvolutionalNeuralNetworkForClassificationExample
     cd(o_dir)
 end
+load('practice_net.mat');
 
 nnvNet = CNN.parse(net, 'mnist_builtin');
 
@@ -64,7 +65,7 @@ IS = ImageStar(V, C, d, pred_lb, pred_ub);
 fprintf('\n========= PARSE VGG16 FOR REACHABILITY ANALYSIS ============\n');
 
 fprintf('\n======= DO REACHABILITY ANLAYSIS WITH EXACT-STAR METHOD ======\n');
-
+%{
 numCores = 1;
 nnvNet.reach(IS, 'exact-star', numCores);
 
@@ -72,4 +73,4 @@ nnvNet.reach(IS, 'exact-star', numCores);
 figure; hold on;
 plot([0:9], squeeze(nnvNet.reachSet{end}.V(:,:,:,1)));
 plot([0:9], squeeze(nnvNet.reachSet{end}.V(:,:,:,2)));
-
+%}
